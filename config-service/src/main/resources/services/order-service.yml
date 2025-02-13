@@ -1,0 +1,20 @@
+spring:
+  jpa:
+    database: POSTGRESQL
+    properties.hibernate.temp.use_jdbc_metadata_defaults: false
+    hibernate:
+      ddl-auto: create
+    properties:
+  datasource:
+    platform: postgres
+    url: jdbc:postgresql://${db.host:localhost}:5432/order_service_database
+    username: ${db.username:postgres}
+    password: ${db.password:postgres}
+    driver-class-name: org.postgresql.Driver
+#  liquibase:
+#    change-log: classpath:/db/changelog/main-changelog.xml
+
+server:
+  servlet:
+    context-path: /orders
+  port: 8083
