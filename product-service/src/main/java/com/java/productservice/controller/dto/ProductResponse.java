@@ -1,6 +1,7 @@
 package com.java.productservice.controller.dto;
 
 import jakarta.persistence.Column;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,25 +15,25 @@ import java.time.LocalDateTime;
 @Builder
 public class ProductResponse {
 
-    @NonNull
+    @NotNull
     @Column(name = "category")
     @Size(max = 50)
-    private String category;
+    private String categoryId;
 
-    @NonNull
+    @NotNull
     @Column(name = "name")
     @Size(max = 50)
     private String name;
 
-    @NonNull
+    @NotNull
     @Column(name = "price")
     private Double price;
 
-    @NonNull
+    @NotNull
     @Column(name = "quantity")
     private Double quantity;//масса нетто в граммах или объем в литрах
 
-    @NonNull
+    @NotNull
     @Column(name = "dateTimeOfManufacture")
     private LocalDateTime dateTimeOfManufacture;
 }

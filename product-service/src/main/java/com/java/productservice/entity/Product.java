@@ -1,22 +1,28 @@
-package com.java.productservice.controller.dto;
+package com.java.productservice.entity;
 
-import jakarta.persistence.Column;
-import jakarta.validation.constraints.Size;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
+@Entity
 @Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductRequest {
+@Table(name = "product")
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
     @NotNull
-    @Column(name = "category")
-    @Size(max = 50)
+    @Column(name = "categoryId")
     private Long categoryId;
 
     @NotNull
@@ -32,7 +38,8 @@ public class ProductRequest {
     @Column(name = "quantity")
     private Double quantity;//масса нетто в граммах или объем в литрах
 
-//    @NotNull
-//    @Column(name = "dateTimeOfManufacture")
-//    private LocalDateTime dateTimeOfManufacture;
+    @NotNull
+    @Column(name = "dateTimeOfManufacture")
+    private LocalDateTime dateTimeOfManufacture;
+
 }
