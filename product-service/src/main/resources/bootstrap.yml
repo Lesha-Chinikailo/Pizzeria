@@ -16,8 +16,13 @@ spring:
 #    change-log: classpath:/db/changelog/main-changelog.xml
 
 
+
 logging:
   level:
+    org:
+      springframework:
+        context:
+          support: debug
     root: "error"
     org.springframework.web: "debug"
     org.hibernate: "error"
