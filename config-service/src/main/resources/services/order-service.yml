@@ -17,4 +17,4 @@ spring:
 server:
   servlet:
     context-path: /orders
-  port: 8083
+  port: 8082

@@ -17,4 +17,4 @@ spring:
 server:
   servlet:
     context-path: /users
-  port: 8085
+  port: 8083
