@@ -2,6 +2,8 @@ package com.java.userservice.config;
 
 import com.java.userservice.models.User;
 import com.java.userservice.repository.UserRepository;
+import com.java.userservice.util.MessageExceptionUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +23,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<User> user = userRepository.findByUsername(username);
         return user
                 .map(CustomUserDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException("username not found with name: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException(MessageExceptionUtil.UserNotFoundWithUsername.formatted(username)));
     }
 
 

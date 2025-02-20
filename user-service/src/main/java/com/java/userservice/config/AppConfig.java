@@ -16,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class AppConfig {
+
     @Bean
     public UserDetailsService userDetailsService() {
         return new CustomUserDetailsService();
@@ -28,10 +29,7 @@ public class AppConfig {
                 "/v3/api-docs/**",
                 "/swagger-resources/**",
                 "/swagger-resources",
-                "/register",
-                "/login",
-                "/validate",
-                "/user/**"
+                "api/v1/users/**"
         };
 
         http.csrf(csrf -> csrf.disable());

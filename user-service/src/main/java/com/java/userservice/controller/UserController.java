@@ -1,6 +1,7 @@
 package com.java.userservice.controller;
 
 import com.java.userservice.controller.dto.*;
+import com.java.userservice.service.JwtService;
 import com.java.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDTO> registerUser(@RequestBody RegisterRequestDTO user) {
@@ -38,5 +40,10 @@ public class UserController {
     @GetMapping("/user/{username}")
     public ResponseEntity<UserResponseDTO> getUser(@PathVariable String username) {
         return ResponseEntity.ok(userService.getUserDetailsByUsername(username));
+    }
+
+    @GetMapping("/user")
+    public String getjwt() {
+        return jwtService.SECRET;
     }
 }

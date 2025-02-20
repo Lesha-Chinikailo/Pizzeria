@@ -6,6 +6,7 @@ import com.java.userservice.exception.UsernameExistsException;
 import com.java.userservice.mapper.UserMapper;
 import com.java.userservice.models.User;
 import com.java.userservice.repository.UserRepository;
+import com.java.userservice.util.MessageExceptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -36,7 +37,7 @@ public class UserService {
     public RegisterResponseDTO register(RegisterRequestDTO dto) {
         User user = userMapper.registerRequestDTOToUser(dto);
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            throw new UsernameExistsException("User already exists with username: " + user.getUsername());
+            throw new UsernameExistsException(MessageExceptionUtil.UserAlreadyExistsWithUsername.formatted(user.getUsername()));
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
@@ -56,7 +57,7 @@ public class UserService {
                 return new TokenResponseDTO(token);
             }
         }
-        throw new BadCredentialsException("Invalid username or password");
+        throw new BadCredentialsException(MessageExceptionUtil.InvalidUsernameOrPassword);
     }
 
     public void validateToken(String token) {
@@ -66,7 +67,7 @@ public class UserService {
         try {
             jwtService.validateToken(token);
         } catch (Exception e) {
-            throw new InvalidTokenException("token is invalid");
+            throw new InvalidTokenException(MessageExceptionUtil.TokenIsInvalid);
         }
     }
 
@@ -75,6 +76,6 @@ public class UserService {
         if (byUsername.isPresent()) {
             return userMapper.userToUserResponseDTO(byUsername.get());
         }
-        throw new UsernameNotFoundException("Unable to find user with username: " + username);
+        throw new UsernameNotFoundException(MessageExceptionUtil.UserNotFoundWithUsername.formatted(username));
     }
 }
