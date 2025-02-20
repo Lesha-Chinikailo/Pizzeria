@@ -6,7 +6,7 @@ import com.java.userservice.exception.UsernameExistsException;
 import com.java.userservice.mapper.UserMapper;
 import com.java.userservice.models.User;
 import com.java.userservice.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,26 +20,22 @@ import java.util.Optional;
 import static com.java.userservice.util.JwtUtil.BEARER_TOKEN_PREFIX;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     public RegisterResponseDTO register(RegisterRequestDTO dto) {
         User user = userMapper.registerRequestDTOToUser(dto);
-        if(userRepository.findByUsername(user.getUsername()).isPresent()) {
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new UsernameExistsException("User already exists with username: " + user.getUsername());
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -52,9 +48,9 @@ public class UserService {
         Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 userFromRequest.getUsername(),
                 userFromRequest.getPassword()));
-        if(authenticate.isAuthenticated()){
+        if (authenticate.isAuthenticated()) {
             Optional<User> userbyUsername = userRepository.findByUsername(userFromRequest.getUsername());
-            if(userbyUsername.isPresent()) {
+            if (userbyUsername.isPresent()) {
                 User user = userbyUsername.get();
                 String token = jwtService.generateToken(user.getUsername(), user.getRole());
                 return new TokenResponseDTO(token);
@@ -64,20 +60,19 @@ public class UserService {
     }
 
     public void validateToken(String token) {
-        if(token.startsWith(BEARER_TOKEN_PREFIX)){
+        if (token.startsWith(BEARER_TOKEN_PREFIX)) {
             token = token.substring(BEARER_TOKEN_PREFIX.length());
         }
         try {
             jwtService.validateToken(token);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             throw new InvalidTokenException("token is invalid");
         }
     }
 
     public UserResponseDTO getUserDetailsByUsername(String username) {
         Optional<User> byUsername = userRepository.findByUsername(username);
-        if(byUsername.isPresent()){
+        if (byUsername.isPresent()) {
             return userMapper.userToUserResponseDTO(byUsername.get());
         }
         throw new UsernameNotFoundException("Unable to find user with username: " + username);
