@@ -3,12 +3,14 @@ package com.java.userservice.controller;
 import com.java.userservice.controller.dto.*;
 import com.java.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.apache.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("api/v1/users")
 public class UserController {
 
     private final UserService userService;
@@ -16,7 +18,9 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDTO> registerUser(@RequestBody RegisterRequestDTO user) {
         RegisterResponseDTO register = userService.register(user);
-        return ResponseEntity.ok(register);
+        return ResponseEntity
+                .status(HttpStatus.SC_CREATED)
+                .body(register);
     }
 
     @PostMapping("/login")
