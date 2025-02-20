@@ -29,14 +29,14 @@ public class AppConfig {
                 "/v3/api-docs/**",
                 "/swagger-resources/**",
                 "/swagger-resources",
-                "api/v1/users/**"
+                "/api/v1/users/**"
         };
 
         http.csrf(csrf -> csrf.disable());
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(patterns).permitAll()
                 .anyRequest()
-                .authenticated() );
+                .authenticated());
         return http.build();
     }
 
@@ -46,8 +46,8 @@ public class AppConfig {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(){
-        DaoAuthenticationProvider authenticationProvider=new DaoAuthenticationProvider();
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userDetailsService());
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;

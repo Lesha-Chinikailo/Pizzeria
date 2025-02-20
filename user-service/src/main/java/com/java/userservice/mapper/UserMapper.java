@@ -28,16 +28,15 @@ public interface UserMapper {
 
     @Named("stringToRole")
     static Role stringToRole(String role) {
-        try{
+        try {
             return Role.valueOf(role.toUpperCase());
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             return Role.USER;
         }
     }
 
     @Named("roleToString")
-    static String  roleToString(Role role) {
+    static String roleToString(Role role) {
         return role.name();
     }
 
