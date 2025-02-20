@@ -13,31 +13,32 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 jar {
     manifest {
         attributes(
-                'Main-Class': 'com.java.configservice.ConfigServiceApplication'
+                'Main-Class': 'com.java.registry.RegistryApplication'
         )
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
 ext {
-    set('springCloudVersion', "2022.0.2")
+    set('springCloudVersion', "2022.0.4")
+}
+
+dependencies {
+    implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-server"
+    implementation "org.springframework.cloud:spring-cloud-starter-config"
 }
 
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
     }
-}
-
-dependencies {
-    implementation "org.springframework.cloud:spring-cloud-config-server"
-    implementation "org.springframework.boot:spring-boot-starter-security"
 }
 
 tasks.named('test') {

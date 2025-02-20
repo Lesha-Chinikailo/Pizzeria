@@ -1,10 +1,10 @@
-//package com.java.configservice;
+//package com.java.registry;
 //
 //import org.junit.jupiter.api.Test;
 //import org.springframework.boot.test.context.SpringBootTest;
 //
 //@SpringBootTest
-//class ConfigServiceApplicationTests {
+//class RegistryApplicationTests {
 //
 //    @Test
 //    void contextLoads() {

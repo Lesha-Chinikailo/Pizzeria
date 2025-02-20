@@ -9,10 +9,10 @@ hystrix:
         isolation:
           thread:
             timeoutInMilliseconds: 20000
-#
-#eureka:
-#  instance:
-#    preferIpAddress: true
-#  client:
-#    service-url:
-#      defaultZone: http://registry:8761/eureka/
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    service-url:
+      defaultZone: http://${db.hostRegisty:localhost}:8761/eureka/
