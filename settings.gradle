@@ -1,6 +1,6 @@
 rootProject.name = 'Pizzaria'
 include 'config-service'
 include 'gateway'
+include 'product-service'
 include 'registry'
 include 'user-service'
-include 'product-service'
