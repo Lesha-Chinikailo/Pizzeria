@@ -2,7 +2,7 @@ package com.java.orderservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.security.core.context.SecurityContextHolder;
+//import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "order")
+@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +31,7 @@ public class Order {
     public static Order buildOrderWithItems(List<OrderItem> orderItems) {
         Order newOrder = Order.builder()
                 .orderDate(LocalDateTime.now())
-                .username(SecurityContextHolder.getContext().getAuthentication().getName())
+//                .username(SecurityContextHolder.getContext().getAuthentication().getName())
                 .build();
         for (OrderItem orderItem : orderItems) {
             newOrder.addItems(orderItem);
