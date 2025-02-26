@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: order-service
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    config:
+      uri: http://localhost:8001
+      fail-fast: true
+      password: admin
+      username: user
+
+  main:
+    allow-bean-definition-overriding: true
+#  liquibase:
+#    change-log: classpath:/db/changelog/main-changelog.xml
+
+
+
+logging:
+  level:
+    org:
+      springframework:
+        context:
+          support: debug
+    root: "error"
+    org.springframework.web: "debug"
+    org.hibernate: "error"
