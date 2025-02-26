@@ -9,6 +9,13 @@ spring:
   security:
     user:
       password: admin
+      name: user
 
 server:
   port: 8001
+
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: health, info

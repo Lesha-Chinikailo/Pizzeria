@@ -1,10 +1,10 @@
-//package com.java.userservice;
+//package com.java.productservice;
 //
 //import org.junit.jupiter.api.Test;
 //import org.springframework.boot.test.context.SpringBootTest;
 //
 //@SpringBootTest
-//class UserServiceApplicationTests {
+//class ProductServiceApplicationTests {
 //
 //    @Test
 //    void contextLoads() {
