@@ -4,23 +4,26 @@ import com.java.orderservice.controller.dto.OrderItemsIdRequestDTO;
 import com.java.orderservice.controller.dto.OrderRequestDTO;
 import com.java.orderservice.controller.dto.OrderResponseDTO;
 import com.java.orderservice.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/orders")
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class OrderController {
     @Autowired
     private OrderService orderService;
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<Long> addOrder(@RequestBody OrderRequestDTO dto) {
+    public ResponseEntity<Long> addOrder(@Valid @RequestBody OrderRequestDTO dto) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(orderService.saveNewOrder(dto));
@@ -44,13 +47,13 @@ public class OrderController {
     }
 
     @PutMapping("/addItems/{id}")
-    public ResponseEntity<Long> addItemsInOrder(@PathVariable Long id, @RequestBody OrderRequestDTO dto) {
+    public ResponseEntity<Long> addItemsInOrder(@PathVariable Long id, @Valid @RequestBody OrderRequestDTO dto) {
         return ResponseEntity.ok(
                 orderService.addItemsInOrder(id, dto));
     }
 
     @PutMapping("/deleteItems/{id}")
-    public ResponseEntity<Long> deleteItemsInOrder(@PathVariable Long id, @RequestBody OrderItemsIdRequestDTO dto) {
+    public ResponseEntity<Long> deleteItemsInOrder(@PathVariable Long id, @Valid @RequestBody OrderItemsIdRequestDTO dto) {
         return ResponseEntity.ok(orderService.deleteItemsInOrder(id, dto));
     }
 
