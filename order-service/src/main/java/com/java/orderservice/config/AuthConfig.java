@@ -12,12 +12,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class AuthConfig {
 
-//    @Bean("customUserDetailsService")
-//    public UserDetailsService getUserDetailsService() {
-//        return new CustomUserDetailsService();
-//    }
-
-
     @Bean
     public JwtAuthenticationFilter authenticationTokenFilterBean() throws Exception {
         return new JwtAuthenticationFilter();

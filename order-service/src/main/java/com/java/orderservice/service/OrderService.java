@@ -83,7 +83,7 @@ public class OrderService {
     }
 
     public void deleteOrderById(Long id) {
-        if(!orderRepository.existsById(id)) {
+        if (!orderRepository.existsById(id)) {
             throw new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(id));
         }
         orderRepository.deleteById(id);

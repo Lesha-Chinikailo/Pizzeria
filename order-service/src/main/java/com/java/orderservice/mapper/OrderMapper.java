@@ -42,36 +42,3 @@ public interface OrderMapper {
                 .toList();
     }
 }
-
-
-
-/*
-* @Mapper(componentModel = "spring", uses = {OrderItemMapper.class})
-public interface OrderMapper {
-
-    OrderMapper INSTANCE = Mappers.getMapper(OrderMapper.class);
-
-    @Mapping(source = "orderItems", target = "orderItems", qualifiedByName = "orderItemsToDtos")
-    OrderResponseDTO orderToResponseDto(Order order);
-
-    @Mapping(source = "orderItems", target = "orderItems", qualifiedByName = "dtosToOrderItems")
-    Order dtoToOrder(OrderRequestDTO dto);
-
-    @Named("dtosToOrderItems")
-    default List<OrderItem> dtosToOrderItems(List<OrderItemRequestDTO> dtos) {
-        OrderItemMapper mapper = Mappers.getMapper(OrderItemMapper.class);
-        return dtos.stream()
-                .map(mapper::dtoToOrderItem)
-                .toList();
-    }
-
-    @Named("orderItemsToDtos")
-    default List<OrderItemResponseDTO> orderItemsToDtos(List<OrderItem> orderItems) {
-        OrderItemMapper mapper = Mappers.getMapper(OrderItemMapper.class);
-        return orderItems
-                .stream()
-                .map(mapper::orderItemToDto)
-                .toList();
-    }
-}
-* */
