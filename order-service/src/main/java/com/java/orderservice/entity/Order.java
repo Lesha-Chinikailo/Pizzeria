@@ -31,16 +31,31 @@ public class Order {
     public static Order buildOrderWithItems(List<OrderItem> orderItems) {
         Order newOrder = Order.builder()
                 .orderDate(LocalDateTime.now())
+                .username("Lesha")
 //                .username(SecurityContextHolder.getContext().getAuthentication().getName())
                 .build();
         for (OrderItem orderItem : orderItems) {
-            newOrder.addItems(orderItem);
+            newOrder.addItem(orderItem);
         }
         return newOrder;
     }
 
-    public void addItems(OrderItem orderItem) {
+    public void addItem(OrderItem orderItem) {
         orderItems.add(orderItem);
         orderItem.setOrder(this);
+    }
+
+    public void addItems(List<OrderItem> orderItems) {
+        for (OrderItem orderItem : orderItems) {
+            orderItems.add(orderItem);
+            orderItem.setOrder(this);
+        }
+    }
+
+    public void deleteItems(List<OrderItem> orderItems) {
+        for (OrderItem orderItem : orderItems) {
+            orderItem.setOrder(null);
+            orderItems.remove(orderItem);
+        }
     }
 }
