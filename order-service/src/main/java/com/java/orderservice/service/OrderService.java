@@ -1,5 +1,6 @@
 package com.java.orderservice.service;
 
+import com.java.orderservice.controller.dto.OrderItemsIdRequestDTO;
 import com.java.orderservice.controller.dto.OrderRequestDTO;
 import com.java.orderservice.controller.dto.OrderResponseDTO;
 import com.java.orderservice.entity.Order;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +65,7 @@ public class OrderService {
         List<OrderItem> orderItems = dto.getOrderItems()
                 .stream()
                 .map(orderItemMapper::dtoToOrderItem)
-                .toList();
+                .collect(Collectors.toList());
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
@@ -71,14 +73,11 @@ public class OrderService {
         return orderRepository.save(order).getId();
     }
 
-    public Long deleteItemsInOrder(Long orderId, OrderRequestDTO dto) {
-        List<OrderItem> orderItems = dto.getOrderItems()
-                .stream()
-                .map(orderItemMapper::dtoToOrderItem)
-                .toList();
-
+    public Long deleteItemsInOrder(Long orderId, OrderItemsIdRequestDTO dto) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
+        List<Long> orderIds = dto.getOrderIds();
+        List<OrderItem> orderItems = orderItemRepository.findByIdIn(orderIds);
         order.deleteItems(orderItems);
         return orderRepository.save(order).getId();
     }

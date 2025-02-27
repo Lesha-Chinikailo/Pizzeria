@@ -47,15 +47,18 @@ public class Order {
 
     public void addItems(List<OrderItem> orderItems) {
         for (OrderItem orderItem : orderItems) {
-            orderItems.add(orderItem);
-            orderItem.setOrder(this);
+            addItem(orderItem);
         }
     }
 
     public void deleteItems(List<OrderItem> orderItems) {
         for (OrderItem orderItem : orderItems) {
-            orderItem.setOrder(null);
-            orderItems.remove(orderItem);
+            deleteItem(orderItem);
         }
+    }
+
+    private void deleteItem(OrderItem orderItem) {
+        orderItem.setOrder(null);
+        orderItems.remove(orderItem);
     }
 }
