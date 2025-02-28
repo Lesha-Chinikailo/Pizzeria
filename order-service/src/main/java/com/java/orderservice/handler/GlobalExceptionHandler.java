@@ -1,5 +1,6 @@
 package com.java.orderservice.handler;
 
+import com.java.orderservice.exception.OrderAlreadyPaidException;
 import com.java.orderservice.exception.OrderNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -33,6 +34,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException exception) {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
+                .body(exception.getMessage());
+    }
+
+    @ExceptionHandler({OrderAlreadyPaidException.class})
+    public ResponseEntity<Object> handleOrderAlreadyPaidException(OrderAlreadyPaidException exception) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
                 .body(exception.getMessage());
     }
 
