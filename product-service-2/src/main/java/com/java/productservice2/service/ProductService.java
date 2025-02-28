@@ -66,8 +66,8 @@ public class ProductService {
         if(!productRepository.existsById(id)) {
             throw new ProductNotFoundException(MessageExceptionUtil.UnableFindProductById.formatted(id));
         }
-        Long body = orderServiceClient.getOrderIdByProductId(id).getBody();
-        if(body == -1){
+        Long orderId = orderServiceClient.getOrderIdByProductId(id).getBody();
+        if(orderId != -1){
             throw new ProductIsTakenException(MessageExceptionUtil.ProductIsTakenWithId.formatted(id));
         }
 
