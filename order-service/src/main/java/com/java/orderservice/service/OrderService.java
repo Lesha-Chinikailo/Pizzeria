@@ -5,6 +5,7 @@ import com.java.orderservice.controller.dto.OrderRequestDTO;
 import com.java.orderservice.controller.dto.OrderResponseDTO;
 import com.java.orderservice.entity.Order;
 import com.java.orderservice.entity.OrderItem;
+import com.java.orderservice.exception.OrderAlreadyPaidException;
 import com.java.orderservice.exception.OrderNotFoundException;
 import com.java.orderservice.mapper.OrderItemMapper;
 import com.java.orderservice.mapper.OrderMapper;
@@ -42,9 +43,10 @@ public class OrderService {
     public List<OrderResponseDTO> findAllOrders() {
         List<Order> all = orderRepository.findAll();
 
-        return all.stream()
+        List<OrderResponseDTO> list = all.stream()
                 .map(orderMapper::orderToResponseDto)
                 .toList();
+        return list;
     }
 
     public List<OrderResponseDTO> findAllOrdersByUsername(String username) {
@@ -87,5 +89,31 @@ public class OrderService {
             throw new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(id));
         }
         orderRepository.deleteById(id);
+    }
+
+    public void payOrder(Long id) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(id)));
+        if(order.getIsPaid())
+            throw new OrderAlreadyPaidException(MessageExceptionUtil.OrderAlreadyPaidWithId.formatted(id));
+        order.setIsPaid(true);
+        orderRepository.save(order);
+    }
+
+    public Long itemIdInOrder(Long productId) {
+        List<Order> all = orderRepository.findAll();
+        List<Order> list = all.stream()
+                .filter(order -> !order.getIsPaid())
+                .toList();
+        for (Order order : list) {
+            List<OrderItem> orderItems = order.getOrderItems();
+            List<OrderItem> orderItemsWithProductId = orderItems.stream()
+                    .filter(item -> item.getProductId().equals(productId))
+                    .toList();
+            if(!orderItemsWithProductId.isEmpty()) {
+                return order.getId();
+            }
+
+        }
+        return -1L;
     }
 }

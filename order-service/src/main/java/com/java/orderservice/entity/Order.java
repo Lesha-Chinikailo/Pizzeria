@@ -26,6 +26,9 @@ public class Order {
     private LocalDateTime orderDate;
 
     @Builder.Default
+    private Boolean isPaid = false;
+
+    @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
 
