@@ -63,4 +63,15 @@ public class OrderController {
         orderService.deleteOrderById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/order/pay/{id}")
+    public ResponseEntity<?> payOrder(@PathVariable Long id){
+        orderService.payOrder(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/order/productId/{productId}")
+    public ResponseEntity<Long> getOrderIdByProductId(@PathVariable Long productId) {
+        return ResponseEntity.ok(orderService.itemIdInOrder(productId));
+    }
 }
