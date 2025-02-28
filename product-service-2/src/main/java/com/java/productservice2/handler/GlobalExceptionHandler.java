@@ -1,6 +1,7 @@
 package com.java.productservice2.handler;
 
 import com.java.productservice2.exception.CategoryNotFoundException;
+import com.java.productservice2.exception.ProductIsTakenException;
 import com.java.productservice2.exception.ProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -20,17 +21,17 @@ public class GlobalExceptionHandler {
     @Autowired
     private MessageSource messageSource;
 
-    @ExceptionHandler({ProductNotFoundException.class})
-    public ResponseEntity<Object> handleProductNotFoundException(ProductNotFoundException exception) {
+    @ExceptionHandler({ProductNotFoundException.class, CategoryNotFoundException.class})
+    public ResponseEntity<Object> handleProductNotFoundException(RuntimeException exception) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(exception.getMessage());
     }
 
-    @ExceptionHandler({CategoryNotFoundException.class})
-    public ResponseEntity<Object> handleCategoryNotFoundException(CategoryNotFoundException exception) {
+    @ExceptionHandler({ProductIsTakenException.class})
+    public ResponseEntity<Object> handleProductIsTakenException(ProductIsTakenException exception) {
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+                .status(HttpStatus.BAD_REQUEST)
                 .body(exception.getMessage());
     }
 
