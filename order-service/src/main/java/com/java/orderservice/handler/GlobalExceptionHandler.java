@@ -25,23 +25,29 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({OrderNotFoundException.class})
     public ResponseEntity<Object> handleOrderNotFoundException(OrderNotFoundException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(exception.getMessage());
+                .body(response);
     }
 
     @ExceptionHandler({AccessDeniedException.class})
     public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
-                .body(exception.getMessage());
+                .body(response);
     }
 
     @ExceptionHandler({OrderAlreadyPaidException.class})
     public ResponseEntity<Object> handleOrderAlreadyPaidException(OrderAlreadyPaidException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(exception.getMessage());
+                .body(response);
     }
 
     @ExceptionHandler({ConstraintViolationException.class})
@@ -79,10 +85,10 @@ public class GlobalExceptionHandler {
                 .body(errorMap);
     }
 
-//    @ExceptionHandler({RuntimeException.class})
-//    public ResponseEntity<Object> handleRuntimeException(RuntimeException exception) {
-//        return ResponseEntity
-//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(exception.getMessage());
-//    }
+    @ExceptionHandler({RuntimeException.class})
+    public ResponseEntity<Object> handleRuntimeException(RuntimeException exception) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(exception.getMessage());
+    }
 }

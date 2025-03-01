@@ -1,5 +1,6 @@
 package com.java.orderservice.service;
 
+import com.java.orderservice.controller.dto.OrderIdResponseDTO;
 import com.java.orderservice.controller.dto.OrderItemsIdRequestDTO;
 import com.java.orderservice.controller.dto.OrderRequestDTO;
 import com.java.orderservice.controller.dto.OrderResponseDTO;
@@ -28,7 +29,7 @@ public class OrderService {
     private final OrderItemMapper orderItemMapper;
     private final OrderMapper orderMapper;
 
-    public Long saveNewOrder(OrderRequestDTO dto) {
+    public OrderIdResponseDTO saveNewOrder(OrderRequestDTO dto) {
         List<OrderItem> orderItems = dto.getOrderItems()
                 .stream()
                 .map(orderItemMapper::dtoToOrderItem)
@@ -37,7 +38,7 @@ public class OrderService {
         Order newOrder = Order.buildOrderWithItems(orderItems);
 
         Order savedOrder = orderRepository.save(newOrder);
-        return savedOrder.getId();
+        return new OrderIdResponseDTO(savedOrder.getId());
     }
 
     public List<OrderResponseDTO> findAllOrders() {
@@ -63,7 +64,7 @@ public class OrderService {
                         .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(id))));
     }
 
-    public Long addItemsInOrder(Long orderId, OrderRequestDTO dto) {
+    public OrderIdResponseDTO addItemsInOrder(Long orderId, OrderRequestDTO dto) {
         List<OrderItem> orderItems = dto.getOrderItems()
                 .stream()
                 .map(orderItemMapper::dtoToOrderItem)
@@ -72,16 +73,19 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
         order.addItems(orderItems);
-        return orderRepository.save(order).getId();
+        Order updated = orderRepository.save(order);
+        return new OrderIdResponseDTO(updated.getId());
     }
 
-    public Long deleteItemsInOrder(Long orderId, OrderItemsIdRequestDTO dto) {
+    public OrderIdResponseDTO deleteItemsInOrder(Long orderId, OrderItemsIdRequestDTO dto) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
         List<Long> orderIds = dto.getOrderIds();
         List<OrderItem> orderItems = orderItemRepository.findByIdIn(orderIds);
         order.deleteItems(orderItems);
-        return orderRepository.save(order).getId();
+        order.addItems(orderItems);
+        Order updated = orderRepository.save(order);
+        return new OrderIdResponseDTO(updated.getId());
     }
 
     public void deleteOrderById(Long id) {
@@ -93,13 +97,13 @@ public class OrderService {
 
     public void payOrder(Long id) {
         Order order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(id)));
-        if(order.getIsPaid())
+        if (order.getIsPaid())
             throw new OrderAlreadyPaidException(MessageExceptionUtil.OrderAlreadyPaidWithId.formatted(id));
         order.setIsPaid(true);
         orderRepository.save(order);
     }
 
-    public Long itemIdInOrder(Long productId) {
+    public OrderIdResponseDTO itemIdInOrder(Long productId) {
         List<Order> all = orderRepository.findAll();
         List<Order> list = all.stream()
                 .filter(order -> !order.getIsPaid())
@@ -109,11 +113,11 @@ public class OrderService {
             List<OrderItem> orderItemsWithProductId = orderItems.stream()
                     .filter(item -> item.getProductId().equals(productId))
                     .toList();
-            if(!orderItemsWithProductId.isEmpty()) {
-                return order.getId();
+            if (!orderItemsWithProductId.isEmpty()) {
+                return new OrderIdResponseDTO(order.getId());
             }
 
         }
-        return -1L;
+        return new OrderIdResponseDTO(-1L);
     }
 }
