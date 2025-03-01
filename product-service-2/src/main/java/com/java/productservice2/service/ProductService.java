@@ -5,6 +5,7 @@ import com.java.productservice2.controller.dto.ProductIdResponse;
 import com.java.productservice2.controller.dto.ProductRequest;
 import com.java.productservice2.controller.dto.ProductResponse;
 import com.java.productservice2.entity.Product;
+import com.java.productservice2.exception.CategoryNotFoundException;
 import com.java.productservice2.exception.ProductIsTakenException;
 import com.java.productservice2.exception.ProductNotFoundException;
 import com.java.productservice2.mapper.ProductMapper;
@@ -24,11 +25,15 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final OrderServiceClient orderServiceClient;
+    private final CategoryService categoryService;
 
-    public Long createProduct(ProductRequest productRequest) {
+    public ProductIdResponse createProduct(ProductRequest productRequest) {
         Product product = productMapper.productRequestToProduct(productRequest);
+        if (!categoryService.existsCategory(product.getCategoryId()))
+            throw new CategoryNotFoundException(MessageExceptionUtil.CategoryNotFoundWithIdByAddProduct.formatted(product.getCategoryId()));
         product.setDateTimeOfManufacture(LocalDateTime.now());
-        return productRepository.save(product).getId();
+        Product saved = productRepository.save(product);
+        return new ProductIdResponse(saved.getId());
     }
 
     public ProductResponse getProductById(Long id) {
