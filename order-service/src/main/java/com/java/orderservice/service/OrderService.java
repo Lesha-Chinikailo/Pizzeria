@@ -1,20 +1,21 @@
 package com.java.orderservice.service;
 
-import com.java.orderservice.controller.dto.OrderIdResponseDTO;
-import com.java.orderservice.controller.dto.OrderItemsIdRequestDTO;
-import com.java.orderservice.controller.dto.OrderRequestDTO;
-import com.java.orderservice.controller.dto.OrderResponseDTO;
+import com.java.orderservice.client.ProductServiceClient;
+import com.java.orderservice.controller.dto.*;
 import com.java.orderservice.entity.Order;
 import com.java.orderservice.entity.OrderItem;
 import com.java.orderservice.exception.OrderAlreadyPaidException;
 import com.java.orderservice.exception.OrderNotFoundException;
+import com.java.orderservice.exception.ProductNotFoundException;
 import com.java.orderservice.mapper.OrderItemMapper;
 import com.java.orderservice.mapper.OrderMapper;
 import com.java.orderservice.repository.OrderItemRepository;
 import com.java.orderservice.repository.OrderRepository;
 import com.java.orderservice.util.MessageExceptionUtil;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
-//import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,12 +29,15 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderItemMapper orderItemMapper;
     private final OrderMapper orderMapper;
+    private final ProductServiceClient productServiceClient;
 
     public OrderIdResponseDTO saveNewOrder(OrderRequestDTO dto) {
         List<OrderItem> orderItems = dto.getOrderItems()
                 .stream()
                 .map(orderItemMapper::dtoToOrderItem)
                 .toList();
+
+        checkExistsProductsByOrderItems(orderItems);
 
         Order newOrder = Order.buildOrderWithItems(orderItems);
 
@@ -70,6 +74,8 @@ public class OrderService {
                 .map(orderItemMapper::dtoToOrderItem)
                 .collect(Collectors.toList());
 
+        checkExistsProductsByOrderItems(orderItems);
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
         order.addItems(orderItems);
@@ -82,6 +88,7 @@ public class OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
         List<Long> orderIds = dto.getOrderIds();
         List<OrderItem> orderItems = orderItemRepository.findByIdIn(orderIds);
+
         order.deleteItems(orderItems);
         order.addItems(orderItems);
         Order updated = orderRepository.save(order);
@@ -120,5 +127,30 @@ public class OrderService {
 
         }
         return new OrderIdResponseDTO(-1L);
+    }
+
+
+    private void checkExistsProductsByOrderItems(List<OrderItem> orderItems) {
+        List<Long> productsIds = orderItems.stream()
+                .map(OrderItem::getProductId)
+                .toList();
+        checkExistsProductsById(productsIds);
+    }
+
+    private void checkExistsProductsById(List<Long> productIds) {
+        for (Long productId : productIds) {
+            if(!checkExistsProductById(productId))
+                throw new ProductNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(productId));
+        }
+    }
+
+    private boolean checkExistsProductById(Long productId){
+        try {
+            ResponseEntity<ProductResponse> productById = productServiceClient.getProductById(productId);
+            return productById.getStatusCode() == HttpStatus.OK;
+        }
+        catch (FeignException e){
+            return false;
+        }
     }
 }

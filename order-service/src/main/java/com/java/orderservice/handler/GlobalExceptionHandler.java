@@ -2,6 +2,7 @@ package com.java.orderservice.handler;
 
 import com.java.orderservice.exception.OrderAlreadyPaidException;
 import com.java.orderservice.exception.OrderNotFoundException;
+import com.java.orderservice.exception.ProductNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,8 @@ public class GlobalExceptionHandler {
     @Autowired
     private MessageSource messageSource;
 
-    @ExceptionHandler({OrderNotFoundException.class})
-    public ResponseEntity<Object> handleOrderNotFoundException(OrderNotFoundException exception) {
+    @ExceptionHandler({OrderNotFoundException.class, ProductNotFoundException.class})
+    public ResponseEntity<Object> handleNotFoundException(RuntimeException exception) {
         Map<String, String> response = new HashMap<>();
         response.put("message", exception.getMessage());
         return ResponseEntity
