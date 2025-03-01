@@ -1,6 +1,7 @@
 package com.java.productservice2.service;
 
 import com.java.productservice2.client.OrderServiceClient;
+import com.java.productservice2.controller.dto.ProductIdResponse;
 import com.java.productservice2.controller.dto.ProductRequest;
 import com.java.productservice2.controller.dto.ProductResponse;
 import com.java.productservice2.entity.Product;
@@ -66,8 +67,8 @@ public class ProductService {
         if(!productRepository.existsById(id)) {
             throw new ProductNotFoundException(MessageExceptionUtil.UnableFindProductById.formatted(id));
         }
-        Long orderId = orderServiceClient.getOrderIdByProductId(id).getBody();
-        if(orderId != -1){
+        Long body = orderServiceClient.getOrderIdByProductId(id).getBody();
+        if(body == -1){
             throw new ProductIsTakenException(MessageExceptionUtil.ProductIsTakenWithId.formatted(id));
         }
 
