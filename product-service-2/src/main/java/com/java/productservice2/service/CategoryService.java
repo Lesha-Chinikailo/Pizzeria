@@ -7,6 +7,7 @@ import com.java.productservice2.entity.Category;
 import com.java.productservice2.exception.CategoryNotFoundException;
 import com.java.productservice2.mapper.CategoryMapper;
 import com.java.productservice2.repository.CategoryRepository;
+import com.java.productservice2.util.MessageExceptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,20 +35,20 @@ public class CategoryService {
     public CategoryResponse getCategoryById(Long id) {
         return categoryMapper.categoryToCategoryResponse(
                 categoryRepository.findById(id)
-                        .orElseThrow(() -> new CategoryNotFoundException("Unable to find category with id: " + id))
+                        .orElseThrow(() -> new CategoryNotFoundException(MessageExceptionUtil.CategoryNotFoundWithId.formatted(id)))
         );
     }
 
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("Unable to find category with id: " + id));
+                .orElseThrow(() -> new CategoryNotFoundException(MessageExceptionUtil.CategoryNotFoundWithId.formatted(id)));
         category.setName(request.getName());
         return categoryMapper.categoryToCategoryResponse(categoryRepository.save(category));
     }
 
     public void deleteCategory(Long id) {
         if(!categoryRepository.existsById(id)) {
-            throw new CategoryNotFoundException("Unable to find category with id: " + id);
+            throw new CategoryNotFoundException(MessageExceptionUtil.CategoryNotFoundWithId.formatted(id));
         }
         categoryRepository.deleteById(id);
     }
