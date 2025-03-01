@@ -66,13 +66,12 @@ public class OrderController {
     }
 
     @PatchMapping("/pay/{id}")
-    public ResponseEntity<?> payOrder(@PathVariable Long id){
-        orderService.payOrder(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<OrderIdResponseDTO> payOrder(@PathVariable Long id){
+        return ResponseEntity.ok().body(orderService.payOrder(id));
     }
 
     @GetMapping("/productId/{productId}")
     public ResponseEntity<OrderIdResponseDTO> getOrderIdByProductId(@PathVariable Long productId) {
-        return ResponseEntity.ok(orderService.itemIdInOrder(productId));
+        return ResponseEntity.ok(orderService.findOrderIdByItemId(productId));
     }
 }

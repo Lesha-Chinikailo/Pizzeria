@@ -95,15 +95,16 @@ public class OrderService {
         orderRepository.deleteById(id);
     }
 
-    public void payOrder(Long id) {
+    public OrderIdResponseDTO payOrder(Long id) {
         Order order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(id)));
         if (order.getIsPaid())
             throw new OrderAlreadyPaidException(MessageExceptionUtil.OrderAlreadyPaidWithId.formatted(id));
         order.setIsPaid(true);
-        orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        return new OrderIdResponseDTO(saved.getId());
     }
 
-    public OrderIdResponseDTO itemIdInOrder(Long productId) {
+    public OrderIdResponseDTO findOrderIdByItemId(Long productId) {
         List<Order> all = orderRepository.findAll();
         List<Order> list = all.stream()
                 .filter(order -> !order.getIsPaid())
