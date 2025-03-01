@@ -1,5 +1,6 @@
 package com.java.productservice2.controller;
 
+import com.java.productservice2.controller.dto.CategoryIdResponse;
 import com.java.productservice2.controller.dto.CategoryRequest;
 import com.java.productservice2.controller.dto.CategoryResponse;
 import com.java.productservice2.service.CategoryService;
@@ -27,7 +28,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<Long> createCategory(@RequestBody CategoryRequest categoryRequest) {
+    public ResponseEntity<CategoryIdResponse> createCategory(@RequestBody CategoryRequest categoryRequest) {
         return ResponseEntity.ok(categoryService.createCategory(categoryRequest));
     }
 

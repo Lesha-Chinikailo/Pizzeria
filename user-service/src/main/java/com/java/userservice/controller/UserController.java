@@ -34,9 +34,4 @@ public class UserController {
         userService.validateToken(token);
         return ResponseEntity.ok().build();
     }
-
-    @GetMapping("/user/{username}")
-    public ResponseEntity<UserResponseDTO> getUser(@PathVariable String username) {
-        return ResponseEntity.ok(userService.getUserDetailsByUsername(username));
-    }
 }
