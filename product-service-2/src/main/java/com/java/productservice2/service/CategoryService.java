@@ -1,5 +1,6 @@
 package com.java.productservice2.service;
 
+import com.java.productservice2.controller.dto.CategoryIdResponse;
 import com.java.productservice2.controller.dto.CategoryRequest;
 import com.java.productservice2.controller.dto.CategoryResponse;
 import com.java.productservice2.entity.Category;
@@ -18,9 +19,10 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
 
-    public Long createCategory(CategoryRequest request) {
+    public CategoryIdResponse createCategory(CategoryRequest request) {
         Category category = categoryMapper.categoryRequestToCategory(request);
-        return categoryRepository.save(category).getId();
+        Category saved = categoryRepository.save(category);
+        return new CategoryIdResponse(saved.getId());
     }
 
     public List<CategoryResponse> getCategories() {

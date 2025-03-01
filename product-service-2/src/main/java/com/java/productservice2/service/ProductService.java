@@ -1,6 +1,7 @@
 package com.java.productservice2.service;
 
 import com.java.productservice2.client.OrderServiceClient;
+import com.java.productservice2.controller.dto.ProductIdResponse;
 import com.java.productservice2.controller.dto.ProductRequest;
 import com.java.productservice2.controller.dto.ProductResponse;
 import com.java.productservice2.entity.Product;
@@ -24,10 +25,11 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final OrderServiceClient orderServiceClient;
 
-    public Long createProduct(ProductRequest productRequest) {
+    public ProductIdResponse createProduct(ProductRequest productRequest) {
         Product product = productMapper.productRequestToProduct(productRequest);
         product.setDateTimeOfManufacture(LocalDateTime.now());
-        return productRepository.save(product).getId();
+        Product saved = productRepository.save(product);
+        return new ProductIdResponse(saved.getId());
     }
 
     public ProductResponse getProductById(Long id) {
