@@ -2,6 +2,7 @@ package com.java.orderservice.handler;
 
 import com.java.orderservice.exception.OrderAlreadyPaidException;
 import com.java.orderservice.exception.OrderNotFoundException;
+import com.java.orderservice.exception.ProductNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,25 +24,31 @@ public class GlobalExceptionHandler {
     @Autowired
     private MessageSource messageSource;
 
-    @ExceptionHandler({OrderNotFoundException.class})
-    public ResponseEntity<Object> handleOrderNotFoundException(OrderNotFoundException exception) {
+    @ExceptionHandler({OrderNotFoundException.class, ProductNotFoundException.class})
+    public ResponseEntity<Object> handleNotFoundException(RuntimeException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(exception.getMessage());
+                .body(response);
     }
 
     @ExceptionHandler({AccessDeniedException.class})
     public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
-                .body(exception.getMessage());
+                .body(response);
     }
 
     @ExceptionHandler({OrderAlreadyPaidException.class})
     public ResponseEntity<Object> handleOrderAlreadyPaidException(OrderAlreadyPaidException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(exception.getMessage());
+                .body(response);
     }
 
     @ExceptionHandler({ConstraintViolationException.class})
@@ -79,10 +86,10 @@ public class GlobalExceptionHandler {
                 .body(errorMap);
     }
 
-//    @ExceptionHandler({RuntimeException.class})
-//    public ResponseEntity<Object> handleRuntimeException(RuntimeException exception) {
-//        return ResponseEntity
-//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(exception.getMessage());
-//    }
+    @ExceptionHandler({RuntimeException.class})
+    public ResponseEntity<Object> handleRuntimeException(RuntimeException exception) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(exception.getMessage());
+    }
 }

@@ -1,5 +1,6 @@
 package com.java.orderservice.controller;
 
+import com.java.orderservice.controller.dto.OrderIdResponseDTO;
 import com.java.orderservice.controller.dto.OrderItemsIdRequestDTO;
 import com.java.orderservice.controller.dto.OrderRequestDTO;
 import com.java.orderservice.controller.dto.OrderResponseDTO;
@@ -23,7 +24,7 @@ public class OrderController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<Long> addOrder(@Valid @RequestBody OrderRequestDTO dto) {
+    public ResponseEntity<OrderIdResponseDTO> addOrder(@Valid @RequestBody OrderRequestDTO dto) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(orderService.saveNewOrder(dto));
@@ -47,13 +48,13 @@ public class OrderController {
     }
 
     @PutMapping("/addItems/{id}")
-    public ResponseEntity<Long> addItemsInOrder(@PathVariable Long id, @Valid @RequestBody OrderRequestDTO dto) {
+    public ResponseEntity<OrderIdResponseDTO> addItemsInOrder(@PathVariable Long id, @Valid @RequestBody OrderRequestDTO dto) {
         return ResponseEntity.ok(
                 orderService.addItemsInOrder(id, dto));
     }
 
     @PutMapping("/deleteItems/{id}")
-    public ResponseEntity<Long> deleteItemsInOrder(@PathVariable Long id, @Valid @RequestBody OrderItemsIdRequestDTO dto) {
+    public ResponseEntity<OrderIdResponseDTO> deleteItemsInOrder(@PathVariable Long id, @Valid @RequestBody OrderItemsIdRequestDTO dto) {
         return ResponseEntity.ok(orderService.deleteItemsInOrder(id, dto));
     }
 
@@ -65,13 +66,12 @@ public class OrderController {
     }
 
     @PatchMapping("/pay/{id}")
-    public ResponseEntity<?> payOrder(@PathVariable Long id){
-        orderService.payOrder(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<OrderIdResponseDTO> payOrder(@PathVariable Long id){
+        return ResponseEntity.ok().body(orderService.payOrder(id));
     }
 
     @GetMapping("/productId/{productId}")
-    public ResponseEntity<Long> getOrderIdByProductId(@PathVariable Long productId) {
-        return ResponseEntity.ok(orderService.itemIdInOrder(productId));
+    public ResponseEntity<OrderIdResponseDTO> getOrderIdByProductId(@PathVariable Long productId) {
+        return ResponseEntity.ok(orderService.findOrderIdByItemId(productId));
     }
 }

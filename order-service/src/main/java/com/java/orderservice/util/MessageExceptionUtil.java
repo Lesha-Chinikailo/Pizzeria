@@ -6,5 +6,6 @@ import lombok.experimental.UtilityClass;
 public class MessageExceptionUtil {
     public static final String UnableFindOrderById = "Unable to find order with id: %s";
     public static final String OrderAlreadyPaidWithId = "Order already is paid with id: %s";
+    public static final String UnableFindProductById = "Unable to find product with id: %s. You need to repeat order";
 
 }

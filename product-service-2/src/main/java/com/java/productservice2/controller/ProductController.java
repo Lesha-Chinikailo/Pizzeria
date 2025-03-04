@@ -1,5 +1,6 @@
 package com.java.productservice2.controller;
 
+import com.java.productservice2.controller.dto.ProductIdResponse;
 import com.java.productservice2.controller.dto.ProductRequest;
 import com.java.productservice2.controller.dto.ProductResponse;
 import com.java.productservice2.service.ProductService;
@@ -34,8 +35,8 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductsByCategoryId(categoryId));
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<Long> addProduct(@Valid @RequestBody ProductRequest productRequest) {
+    @PostMapping
+    public ResponseEntity<ProductIdResponse> addProduct(@Valid @RequestBody ProductRequest productRequest) {
         return ResponseEntity.ok(productService.createProduct(productRequest));
     }
 

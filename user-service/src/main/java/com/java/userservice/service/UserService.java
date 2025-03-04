@@ -70,12 +70,4 @@ public class UserService {
             throw new InvalidTokenException(MessageExceptionUtil.TokenIsInvalid);
         }
     }
-
-    public UserResponseDTO getUserDetailsByUsername(String username) {
-        Optional<User> byUsername = userRepository.findByUsername(username);
-        if (byUsername.isPresent()) {
-            return userMapper.userToUserResponseDTO(byUsername.get());
-        }
-        throw new UsernameNotFoundException(MessageExceptionUtil.UserNotFoundWithUsername.formatted(username));
-    }
 }
