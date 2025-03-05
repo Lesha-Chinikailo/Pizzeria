@@ -15,12 +15,4 @@ public class AppConfig {
             return validatorFactory.getValidator();
         }
     }
-
-//    @Bean
-//    public MessageSource messageSource() {
-//        ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
-//        messageSource.setBasename("classpath:ValidationMessages");
-//        messageSource.setDefaultEncoding("UTF-8");
-//        return messageSource;
-//    }
 }

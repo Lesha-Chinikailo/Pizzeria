@@ -23,16 +23,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ProductNotFoundException.class, CategoryNotFoundException.class})
     public ResponseEntity<Object> handleProductNotFoundException(RuntimeException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(exception.getMessage());
+                .body(response);
     }
 
     @ExceptionHandler({ProductIsTakenException.class})
     public ResponseEntity<Object> handleProductIsTakenException(ProductIsTakenException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(exception.getMessage());
+                .body(response);
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
@@ -58,10 +62,12 @@ public class GlobalExceptionHandler {
     }
 
 
-//    @ExceptionHandler({RuntimeException.class})
-//    public ResponseEntity<Object> handleRuntimeException(RuntimeException exception) {
-//        return ResponseEntity
-//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(exception.getMessage());
-//    }
+    @ExceptionHandler({RuntimeException.class})
+    public ResponseEntity<Object> handleRuntimeException(RuntimeException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(response);
+    }
 }

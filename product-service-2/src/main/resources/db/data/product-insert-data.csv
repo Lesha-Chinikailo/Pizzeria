@@ -1,0 +1,3 @@
+id,category_id,name,price,quantity,date_time_of_manufacture
+1,1,potato,10,35,'3/4/2025 11:34'
+2,1,carrot,8,28,'3/4/2025 11:34'
