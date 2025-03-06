@@ -6,13 +6,11 @@ import com.java.productservice2.controller.dto.ProductRequest;
 import com.java.productservice2.controller.dto.ProductResponse;
 import com.java.productservice2.entity.Product;
 import com.java.productservice2.exception.CategoryNotFoundException;
-import com.java.productservice2.exception.ProductIsTakenException;
 import com.java.productservice2.exception.ProductNotFoundException;
 import com.java.productservice2.mapper.ProductMapper;
 import com.java.productservice2.repository.ProductRepository;
 import com.java.productservice2.util.MessageExceptionUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,6 +24,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final OrderServiceClient orderServiceClient;
     private final CategoryService categoryService;
+    private final KafkaProducerProductService kafkaProducerService;
 
     public ProductIdResponse createProduct(ProductRequest productRequest) {
         Product product = productMapper.productRequestToProduct(productRequest);
@@ -69,13 +68,14 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
-        if(!productRepository.existsById(id)) {
-            throw new ProductNotFoundException(MessageExceptionUtil.UnableFindProductById.formatted(id));
-        }
-        Long body = orderServiceClient.getOrderIdByProductId(id).getBody();
-        if(body == -1){
-            throw new ProductIsTakenException(MessageExceptionUtil.ProductIsTakenWithId.formatted(id));
-        }
+//        if(!productRepository.existsById(id)) {
+//            throw new ProductNotFoundException(MessageExceptionUtil.UnableFindProductById.formatted(id));
+//        }
+//        Long body = orderServiceClient.getOrderIdByProductId(id).getBody();
+//        if(body == -1){
+//            throw new ProductIsTakenException(MessageExceptionUtil.ProductIsTakenWithId.formatted(id));
+//        }
+        kafkaProducerService.sendMessageCheckProductInOrderService(id.toString());
 
         productRepository.deleteById(id);
     }

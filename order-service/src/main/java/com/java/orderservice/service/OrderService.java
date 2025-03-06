@@ -14,8 +14,6 @@ import com.java.orderservice.repository.OrderRepository;
 import com.java.orderservice.util.MessageExceptionUtil;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,6 +28,8 @@ public class OrderService {
     private final OrderItemMapper orderItemMapper;
     private final OrderMapper orderMapper;
     private final ProductServiceClient productServiceClient;
+    private final KafkaProducerOrderService kafkaProducerService;
+    private final KafkaConsumerOrderListener kafkaConsumerListener;
 
     public OrderIdResponseDTO saveNewOrder(OrderRequestDTO dto) {
         List<OrderItem> orderItems = dto.getOrderItems()
@@ -146,8 +146,10 @@ public class OrderService {
 
     private boolean checkExistsProductById(Long productId){
         try {
-            ResponseEntity<ProductResponse> productById = productServiceClient.getProductById(productId);
-            return productById.getStatusCode() == HttpStatus.OK;
+            kafkaProducerService.sendMessageCheckProductInProductService(productId.toString());
+            return kafkaConsumerListener.checkExistsProduct();
+//            ResponseEntity<ProductResponse> productById = productServiceClient.getProductById(productId);
+//            return productById.getStatusCode() == HttpStatus.OK;
         }
         catch (FeignException e){
             return false;
