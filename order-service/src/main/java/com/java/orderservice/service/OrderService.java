@@ -6,15 +6,20 @@ import com.java.orderservice.entity.Order;
 import com.java.orderservice.entity.OrderItem;
 import com.java.orderservice.exception.OrderAlreadyPaidException;
 import com.java.orderservice.exception.OrderNotFoundException;
-import com.java.orderservice.exception.ProductNotFoundException;
 import com.java.orderservice.mapper.OrderItemMapper;
 import com.java.orderservice.mapper.OrderMapper;
 import com.java.orderservice.repository.OrderItemRepository;
 import com.java.orderservice.repository.OrderRepository;
 import com.java.orderservice.util.MessageExceptionUtil;
-import feign.FeignException;
+import com.java.orderservice.util.NameServiceUtil;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +34,6 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final ProductServiceClient productServiceClient;
     private final KafkaProducerOrderService kafkaProducerService;
-    private final KafkaConsumerOrderListener kafkaConsumerListener;
 
     public OrderIdResponseDTO saveNewOrder(OrderRequestDTO dto) {
         List<OrderItem> orderItems = dto.getOrderItems()
@@ -37,11 +41,13 @@ public class OrderService {
                 .map(orderItemMapper::dtoToOrderItem)
                 .toList();
 
-        checkExistsProductsByOrderItems(orderItems);
 
         Order newOrder = Order.buildOrderWithItems(orderItems);
 
         Order savedOrder = orderRepository.save(newOrder);
+
+        checkExistsProductsByOrderItems(savedOrder.getId(), orderItems);
+
         return new OrderIdResponseDTO(savedOrder.getId());
     }
 
@@ -68,13 +74,20 @@ public class OrderService {
                         .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(id))));
     }
 
+    public void setHasDeletedProduct(Long orderId, Long productId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
+        order.setDeletedProductId(productId);
+        orderRepository.save(order);
+    }
+
     public OrderIdResponseDTO addItemsInOrder(Long orderId, OrderRequestDTO dto) {
         List<OrderItem> orderItems = dto.getOrderItems()
                 .stream()
                 .map(orderItemMapper::dtoToOrderItem)
                 .collect(Collectors.toList());
 
-        checkExistsProductsByOrderItems(orderItems);
+        checkExistsProductsByOrderItems(orderId, orderItems);
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
@@ -108,9 +121,16 @@ public class OrderService {
             throw new OrderAlreadyPaidException(MessageExceptionUtil.OrderAlreadyPaidWithId.formatted(id));
         order.setIsPaid(true);
         Order saved = orderRepository.save(order);
+        if(!order.getDeletedProductId().equals(-1L)){
+            JSONObject json = new JSONObject();
+            json.put("productId", order.getDeletedProductId());
+            json.put("orderId", order.getId());
+            kafkaProducerService.sendMessageResponseToProductFromOrderService(json.toJSONString());
+        }
         return new OrderIdResponseDTO(saved.getId());
     }
 
+    @Transactional
     public OrderIdResponseDTO findOrderIdByItemId(Long productId) {
         List<Order> all = orderRepository.findAll();
         List<Order> list = all.stream()
@@ -118,7 +138,8 @@ public class OrderService {
                 .toList();
         for (Order order : list) {
             List<OrderItem> orderItems = order.getOrderItems();
-            List<OrderItem> orderItemsWithProductId = orderItems.stream()
+            List<OrderItem> orderItemsWithProductId = orderItems
+                    .stream()
                     .filter(item -> item.getProductId().equals(productId))
                     .toList();
             if (!orderItemsWithProductId.isEmpty()) {
@@ -130,29 +151,52 @@ public class OrderService {
     }
 
 
-    private void checkExistsProductsByOrderItems(List<OrderItem> orderItems) {
+    private void checkExistsProductsByOrderItems(Long orderId, List<OrderItem> orderItems) {
         List<Long> productsIds = orderItems.stream()
                 .map(OrderItem::getProductId)
                 .toList();
-        checkExistsProductsById(productsIds);
+        checkExistsProductsById(orderId, productsIds);
     }
 
-    private void checkExistsProductsById(List<Long> productIds) {
-        for (Long productId : productIds) {
-            if(!checkExistsProductById(productId))
-                throw new ProductNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(productId));
-        }
-    }
-
-    private boolean checkExistsProductById(Long productId){
+    @KafkaListener(topics = NameServiceUtil.RESPONSE_FROM_PRODUCT_SERVICE)
+    @Transactional
+    public void receiveResponse(ConsumerRecord<String, String> record) {
+        String message = record.value();
+        System.out.println("message in OrderService: " + message);
+        Long orderId;
+        Long productId;
+        boolean isExists;
         try {
-            kafkaProducerService.sendMessageCheckProductInProductService(productId.toString());
-            return kafkaConsumerListener.checkExistsProduct();
-//            ResponseEntity<ProductResponse> productById = productServiceClient.getProductById(productId);
-//            return productById.getStatusCode() == HttpStatus.OK;
+            JSONObject json = (JSONObject) new JSONParser().parse(message);
+            orderId = (Long) json.get("orderId");
+            productId = (Long) json.get("productId");
+            isExists = (Boolean) json.get("isExists");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
-        catch (FeignException e){
-            return false;
+
+        if(!isExists){
+            Order order = orderRepository.findById(orderId).get();
+            OrderItem orderItem = order.getOrderItems()
+                    .stream()
+                    .filter(item -> item.getProductId().equals(productId))
+                    .findFirst().get();
+            order.deleteItem(orderItem);
+            orderRepository.save(order);
         }
+    }
+
+
+    private void checkExistsProductsById(Long orderId, List<Long> productIds) {
+        for (Long productId : productIds) {
+            checkExistsProductById(orderId, productId);
+        }
+    }
+
+    private void checkExistsProductById(Long orderId, Long productId) {
+        JSONObject json = new JSONObject();
+        json.put("productId", productId);
+        json.put("orderId", orderId);
+        kafkaProducerService.sendMessageCheckProductInProductService(json.toJSONString());
     }
 }

@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 public class ProductResponse {
 
+    private Long id;
+
     @NotNull
     @Column(name = "category")
     @Size(max = 50)
@@ -35,4 +37,8 @@ public class ProductResponse {
     @NotNull
     @Column(name = "dateTimeOfManufacture")
     private LocalDateTime dateTimeOfManufacture;
+
+    @NotNull
+    @Column(name = "isAvailable")
+    private Boolean isAvailable;
 }

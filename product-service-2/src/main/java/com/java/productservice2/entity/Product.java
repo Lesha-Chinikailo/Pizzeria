@@ -42,4 +42,8 @@ public class Product {
     @Column(name = "dateTimeOfManufacture")
     private LocalDateTime dateTimeOfManufacture;
 
+    @NotNull
+    @Column(name = "isAvailable")
+    private Boolean isAvailable;
+
 }

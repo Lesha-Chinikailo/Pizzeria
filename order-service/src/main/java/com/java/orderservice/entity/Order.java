@@ -32,6 +32,9 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
 
+    @Builder.Default
+    private Long deletedProductId = -1L;
+
     public static Order buildOrderWithItems(List<OrderItem> orderItems) {
         Order newOrder = Order.builder()
                 .orderDate(LocalDateTime.now())
@@ -60,7 +63,7 @@ public class Order {
         }
     }
 
-    private void deleteItem(OrderItem orderItem) {
+    public void deleteItem(OrderItem orderItem) {
         orderItem.setOrder(null);
         orderItems.remove(orderItem);
     }

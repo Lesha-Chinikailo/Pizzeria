@@ -17,12 +17,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/orders")
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+//@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class OrderController {
     @Autowired
     private OrderService orderService;
 
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<OrderIdResponseDTO> addOrder(@Valid @RequestBody OrderRequestDTO dto) {
         return ResponseEntity
@@ -30,7 +30,7 @@ public class OrderController {
                 .body(orderService.saveNewOrder(dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<OrderResponseDTO>> getOrders() {
         return ResponseEntity.ok(orderService.findAllOrders());
@@ -58,7 +58,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.deleteItemsInOrder(id, dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrderById(id);
