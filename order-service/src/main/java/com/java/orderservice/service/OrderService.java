@@ -4,6 +4,9 @@ import com.java.orderservice.client.ProductServiceClient;
 import com.java.orderservice.controller.dto.*;
 import com.java.orderservice.entity.Order;
 import com.java.orderservice.entity.OrderItem;
+import com.java.orderservice.entity.objectKafka.CustomKafkaObject;
+import com.java.orderservice.entity.objectKafka.KafkaProductIdIsExistsOrderId;
+import com.java.orderservice.entity.objectKafka.KafkaProductOrderId;
 import com.java.orderservice.exception.OrderAlreadyPaidException;
 import com.java.orderservice.exception.OrderNotFoundException;
 import com.java.orderservice.mapper.OrderItemMapper;
@@ -13,6 +16,7 @@ import com.java.orderservice.repository.OrderRepository;
 import com.java.orderservice.util.MessageExceptionUtil;
 import com.java.orderservice.util.NameServiceUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -122,10 +127,14 @@ public class OrderService {
         order.setIsPaid(true);
         Order saved = orderRepository.save(order);
         if(!order.getDeletedProductId().equals(-1L)){
-            JSONObject json = new JSONObject();
-            json.put("productId", order.getDeletedProductId());
-            json.put("orderId", order.getId());
-            kafkaProducerService.sendMessageResponseToProductFromOrderService(json.toJSONString());
+//            JSONObject json = new JSONObject();
+//            json.put("productId", order.getDeletedProductId());
+//            json.put("orderId", order.getId());
+            KafkaProductOrderId object = KafkaProductOrderId.builder()
+                    .orderId(order.getId())
+                    .productId(order.getDeletedProductId())
+                    .build();
+            kafkaProducerService.sendMessageResponseToProductFromOrderService(object);
         }
         return new OrderIdResponseDTO(saved.getId());
     }
@@ -160,20 +169,20 @@ public class OrderService {
 
     @KafkaListener(topics = NameServiceUtil.RESPONSE_FROM_PRODUCT_SERVICE)
     @Transactional
-    public void receiveResponse(ConsumerRecord<String, String> record) {
-        String message = record.value();
-        System.out.println("message in OrderService: " + message);
-        Long orderId;
-        Long productId;
-        boolean isExists;
-        try {
-            JSONObject json = (JSONObject) new JSONParser().parse(message);
-            orderId = (Long) json.get("orderId");
-            productId = (Long) json.get("productId");
-            isExists = (Boolean) json.get("isExists");
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+    public void receiveResponse(ConsumerRecord<String, Object> record) {
+        KafkaProductIdIsExistsOrderId value = (KafkaProductIdIsExistsOrderId) record.value();
+        log.info("value from kafka in OrderService: {}", value);
+        Long orderId = value.getOrderId();
+        Long productId = value.getProductId();
+        boolean isExists = value.getIsExists();
+//        try {
+//            JSONObject json = (JSONObject) new JSONParser().parse(message);
+//            orderId = (Long) json.get("orderId");
+//            productId = (Long) json.get("productId");
+//            isExists = (Boolean) json.get("isExists");
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
 
         if(!isExists){
             Order order = orderRepository.findById(orderId).get();
@@ -194,9 +203,13 @@ public class OrderService {
     }
 
     private void checkExistsProductById(Long orderId, Long productId) {
-        JSONObject json = new JSONObject();
-        json.put("productId", productId);
-        json.put("orderId", orderId);
-        kafkaProducerService.sendMessageCheckProductInProductService(json.toJSONString());
+//        JSONObject json = new JSONObject();
+//        json.put("productId", productId);
+//        json.put("orderId", orderId);
+        KafkaProductOrderId object = KafkaProductOrderId.builder()
+                .productId(productId)
+                .orderId(orderId)
+                .build();
+        kafkaProducerService.sendMessageCheckProductInProductService(object);
     }
 }

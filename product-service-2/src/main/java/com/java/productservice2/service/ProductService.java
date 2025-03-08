@@ -5,28 +5,30 @@ import com.java.productservice2.controller.dto.ProductIdResponse;
 import com.java.productservice2.controller.dto.ProductRequest;
 import com.java.productservice2.controller.dto.ProductResponse;
 import com.java.productservice2.entity.Product;
+import com.java.productservice2.entity.objectKafka.KafkaProductId;
+import com.java.productservice2.entity.objectKafka.KafkaProductOrderId;
 import com.java.productservice2.exception.CategoryNotFoundException;
-import com.java.productservice2.exception.ProductIsTakenException;
 import com.java.productservice2.exception.ProductNotFoundException;
 import com.java.productservice2.mapper.ProductMapper;
 import com.java.productservice2.repository.ProductRepository;
 import com.java.productservice2.util.MessageExceptionUtil;
 import com.java.productservice2.util.NameServiceUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import com.java.productservice2.entity.objectKafka.CustomKafkaObject;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -78,24 +80,23 @@ public class ProductService {
     }
 
     @KafkaListener(topics = NameServiceUtil.RESPONSE_FROM_ORDER_SERVICE)
-    public void receiveResponse(ConsumerRecord<String, String> record) {
-        String message = record.value();
-        System.out.println("message in ProductService: " + message);
+    public void receiveResponse(ConsumerRecord<String, CustomKafkaObject> record) {
+        KafkaProductOrderId message = (KafkaProductOrderId) record.value();
+        log.info("message from kafka in ProductService: {}", message);
 
-        Long orderId;
-        Long productId;
-        try {
-            JSONObject json = (JSONObject) new JSONParser().parse(message);
-            orderId = (Long) json.get("orderId");
-            productId = (Long) json.get("productId");
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+        Long orderId = message.getOrderId();
+        Long productId = message.getProductId();
+//        try {
+//            JSONObject json = (JSONObject) new JSONParser().parse(message);
+//            orderId = (Long) json.get("orderId");
+//            productId = (Long) json.get("productId");
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
 
         if(orderId != -1){
-            JSONObject json = new JSONObject();
-            json.put("productId", productId);
-            kafkaProducerService.sendMessageCheckProductInOrderService(json.toJSONString());
+            KafkaProductId object = new KafkaProductId(productId);
+            kafkaProducerService.sendMessageCheckProductInOrderService(object);
         }
         else{
             productRepository.deleteById(productId);
@@ -110,10 +111,9 @@ public class ProductService {
         product.setIsAvailable(false);
         productRepository.save(product);
 
-        JSONObject json = new JSONObject();
-        json.put("productId", id);
+        KafkaProductId object = new KafkaProductId(id);
 
-        kafkaProducerService.sendMessageCheckProductInOrderService(json.toJSONString());
+        kafkaProducerService.sendMessageCheckProductInOrderService(object);
     }
 
 }
