@@ -8,9 +8,6 @@ import com.java.productservice2.util.NameServiceUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -28,13 +25,6 @@ class KafkaConsumerProductListener {
         Long orderId = value.getOrderId();
         Long productId = value.getProductId();
         Boolean isExists;
-//        try {
-//            JSONObject json = (JSONObject) new JSONParser().parse(message);
-//            orderId = (Long) json.get("orderId");
-//            productId = (Long) json.get("productId");
-//        } catch (ParseException e) {
-//            throw new RuntimeException(e);
-//        }
 
         try{
             ProductResponse productById = productService.getProductById(productId);
@@ -43,17 +33,11 @@ class KafkaConsumerProductListener {
         catch (RuntimeException e){
             isExists = false;
         }
-//        JSONObject json = new JSONObject();
-//        json.put("productId", productId);
-//        json.put("orderId", orderId);
-//        json.put("isExists", isExists);
         KafkaProductIdIsExistsOrderId object = KafkaProductIdIsExistsOrderId.builder()
                 .productId(productId)
                 .orderId(orderId)
                 .isExists(isExists)
                 .build();
-//        KafkaObjectProductIdIsExistsOrderId object = new KafkaObjectProductIdIsExistsOrderId(productId, orderId, isExists);
-
         kafkaProducerService.sendMessageResponseToOrderFromProductService(object);
     }
 

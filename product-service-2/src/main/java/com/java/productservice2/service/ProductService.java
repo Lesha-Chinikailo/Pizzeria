@@ -16,9 +16,6 @@ import com.java.productservice2.util.NameServiceUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import com.java.productservice2.entity.objectKafka.CustomKafkaObject;
@@ -86,13 +83,6 @@ public class ProductService {
 
         Long orderId = message.getOrderId();
         Long productId = message.getProductId();
-//        try {
-//            JSONObject json = (JSONObject) new JSONParser().parse(message);
-//            orderId = (Long) json.get("orderId");
-//            productId = (Long) json.get("productId");
-//        } catch (ParseException e) {
-//            throw new RuntimeException(e);
-//        }
 
         if(orderId != -1){
             KafkaProductId object = new KafkaProductId(productId);

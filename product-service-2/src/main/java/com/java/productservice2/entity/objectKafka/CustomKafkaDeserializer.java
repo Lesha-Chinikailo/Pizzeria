@@ -17,7 +17,6 @@ public class CustomKafkaDeserializer implements Deserializer<CustomKafkaObject> 
     public CustomKafkaObject deserialize(String topic, byte[] data) {
         CustomKafkaObject object = null;
         try {
-            // Deserialize JSON data into CustomKafkaObject
             Object o = objectMapper.readValue(data, Object.class);
             Map<String, Object> map = (HashMap<String, Object>) o;
             int size = map.size();
@@ -46,7 +45,6 @@ public class CustomKafkaDeserializer implements Deserializer<CustomKafkaObject> 
                     break;
             }
 
-//            object = objectMapper.readValue(data, CustomKafkaObject.class);
         } catch (Exception e) {
             throw new RuntimeException("Error deserializing object", e);
         }
