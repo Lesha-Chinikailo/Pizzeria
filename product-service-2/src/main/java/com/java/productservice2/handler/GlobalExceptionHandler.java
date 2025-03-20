@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -36,6 +37,15 @@ public class GlobalExceptionHandler {
         response.put("message", exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler({AccessDeniedException.class})
+    public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException exception) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .body(response);
     }
 

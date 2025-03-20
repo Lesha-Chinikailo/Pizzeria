@@ -20,10 +20,10 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
 
-    public CategoryIdResponse createCategory(CategoryRequest request) {
+    public CategoryResponse createCategory(CategoryRequest request) {
         Category category = categoryMapper.categoryRequestToCategory(request);
         Category saved = categoryRepository.save(category);
-        return new CategoryIdResponse(saved.getId());
+        return categoryMapper.categoryToCategoryResponse(saved);
     }
 
     public List<CategoryResponse> getCategories() {
