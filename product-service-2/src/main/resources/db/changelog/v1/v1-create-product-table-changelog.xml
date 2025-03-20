@@ -10,7 +10,7 @@
             </not>
         </preConditions>
         <createTable tableName="product">
-            <column name="id" type="bigint">
+            <column name="id" type="bigserial">
                 <constraints primaryKey="true"/>
             </column>
             <column name="name" type="varchar(255)">
@@ -25,7 +25,10 @@
             <column name="quantity" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="date_time_of_manufacture" type="date">
+            <column name="date_time_of_manufacture" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_available" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </createTable>
