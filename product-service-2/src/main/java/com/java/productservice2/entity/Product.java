@@ -43,7 +43,7 @@ public class Product {
     private LocalDateTime dateTimeOfManufacture;
 
     @NotNull
-    @Column(name = "isAvailable")
+    @Column(name = "is_available")
     private Boolean isAvailable;
 
 }

@@ -13,15 +13,20 @@ import com.java.productservice2.mapper.ProductMapper;
 import com.java.productservice2.repository.ProductRepository;
 import com.java.productservice2.util.MessageExceptionUtil;
 import com.java.productservice2.util.NameServiceUtil;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import com.java.productservice2.entity.objectKafka.CustomKafkaObject;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -33,26 +38,45 @@ public class ProductService {
     private final OrderServiceClient orderServiceClient;
     private final CategoryService categoryService;
     private final KafkaProducerProductService kafkaProducerService;
+    private final JdbcTemplate jdbcTemplate;
 
-    public ProductIdResponse createProduct(ProductRequest productRequest) {
+    @PostConstruct
+    public void init() {
+        try {
+            var resource = Objects.requireNonNull(getClass().getClassLoader().getResource("db/data/product-insert-data.csv"));
+//            List<String> lines = Files.readAllLines(Paths.get(ClassLoader.getSystemResource("classpath:db/data/product-insert-data.csv").toURI()));
+            List<String> lines = Files.readAllLines(Paths.get(resource.toURI()));
+            String resetSequenceId = "ALTER SEQUENCE product_id_seq RESTART WITH %d";
+            jdbcTemplate.execute(resetSequenceId.formatted(lines.size()));
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+
+    public ProductResponse createProduct(ProductRequest productRequest) {
         Product product = productMapper.productRequestToProduct(productRequest);
         if (!categoryService.existsCategory(product.getCategoryId()))
             throw new CategoryNotFoundException(MessageExceptionUtil.CategoryNotFoundWithIdByAddProduct.formatted(product.getCategoryId()));
         product.setDateTimeOfManufacture(LocalDateTime.now());
         product.setIsAvailable(true);
-        Product saved = productRepository.save(product);
-        return new ProductIdResponse(saved.getId());
+//        Product saved = productRepository.save(product);
+        return productMapper.productToProductResponse(productRepository.save(product));
     }
 
     public ProductResponse getProductById(Long id) {
-        return productMapper.productToProductResponse(
-                productRepository.findById(id)
-                        .orElseThrow(() -> new ProductNotFoundException(MessageExceptionUtil.UnableFindProductById.formatted(id))));
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(MessageExceptionUtil.UnableFindProductById.formatted(id)));
+//        if(!product.getIsAvailable()){
+//            throw new ProductNotFoundException(MessageExceptionUtil.UnableFindProductById.formatted(id));
+//        }
+        return productMapper.productToProductResponse(product);
     }
 
     public List<ProductResponse> getAllProducts() {
         List<Product> all = productRepository.findAll();
         return all.stream()
+//                .filter(Product::getIsAvailable)
                 .map(productMapper::productToProductResponse)
                 .toList();
     }
