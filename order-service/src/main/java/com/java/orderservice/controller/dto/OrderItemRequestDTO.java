@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class OrderItemRequestDTO {
+    @Builder.Default
+    private Long id = null;
     @NotNull(message = "{OrderItemRequestDTO.productId.NotNull}")
     @Column(name = "productId")
     private Long productId;

@@ -3,7 +3,6 @@ package com.java.orderservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.context.SecurityContextHolder;
-//import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -40,6 +39,13 @@ public class Order {
                 .orderDate(LocalDateTime.now())
                 .username(SecurityContextHolder.getContext().getAuthentication().getName())
                 .build();
+
+        for(OrderItem orderItem : orderItems) {
+            if(orderItem.getId() == null || orderItem.getId().equals(0L)) {
+                orderItem.setId(null);
+            }
+        }
+
         for (OrderItem orderItem : orderItems) {
             newOrder.addItem(orderItem);
         }

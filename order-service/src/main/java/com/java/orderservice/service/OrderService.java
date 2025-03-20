@@ -1,6 +1,5 @@
 package com.java.orderservice.service;
 
-import com.java.orderservice.client.ProductServiceClient;
 import com.java.orderservice.controller.dto.*;
 import com.java.orderservice.entity.Order;
 import com.java.orderservice.entity.OrderItem;
@@ -18,10 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,7 +36,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final KafkaProducerOrderService kafkaProducerService;
 
-    public OrderIdResponseDTO saveNewOrder(OrderRequestDTO dto) {
+    public OrderResponseDTO saveNewOrder(OrderRequestDTO dto) {
         List<OrderItem> orderItems = dto.getOrderItems()
                 .stream()
                 .map(orderItemMapper::dtoToOrderItem)
@@ -48,16 +49,24 @@ public class OrderService {
 
         checkExistsProductsByOrderItems(savedOrder.getId(), orderItems);
 
-        return new OrderIdResponseDTO(savedOrder.getId());
+        return orderMapper.orderToResponseDto(savedOrder);
     }
 
     public List<OrderResponseDTO> findAllOrders() {
         List<Order> all = orderRepository.findAll();
 
-        List<OrderResponseDTO> list = all.stream()
+        String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().findFirst().get().toString();
+        if (!role.equals("ROLE_ADMIN")) {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            return all.stream()
+                    .map(orderMapper::orderToResponseDto)
+                    .filter(o -> o.getUsername().equals(username))
+                    .toList();
+        }
+
+        return all.stream()
                 .map(orderMapper::orderToResponseDto)
                 .toList();
-        return list;
     }
 
     public List<OrderResponseDTO> findAllOrdersByUsername(String username) {
@@ -81,12 +90,67 @@ public class OrderService {
         orderRepository.save(order);
     }
 
+    public OrderIdResponseDTO updateOrder(Long orderId, OrderRequestDTO dto) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
+
+        List<OrderItem> orderItemsRequest = new ArrayList<>(dto.getOrderItems().stream()
+                .map(orderItemMapper::dtoToOrderItem)
+                .toList());
+        for(OrderItem orderItem : orderItemsRequest) {
+            if(orderItem.getId().equals(0L)) {
+                orderItem.setId(null);
+            }
+        }
+        List<OrderItem> orderItemsForUpdate = orderItemsRequest.stream()
+                .filter(item  -> item.getId() != null)
+                .toList();
+
+        List<OrderItem> orderItemsNew = orderItemsRequest.stream()
+                .filter(item  -> item.getId() == null)
+                .toList();
+
+        List<OrderItem> orderItemsNow = order.getOrderItems();
+
+
+        List<Long> orderItemsIdForDelete = orderItemsNow
+                .stream()
+                .map(OrderItem::getId)
+                .filter(id -> !orderItemsForUpdate
+                        .stream().map(OrderItem::getId)
+                        .toList()
+                        .contains(id))
+                .toList();
+
+        List<Integer> indexForDeleteFromUpdate = new ArrayList<>();
+        for (OrderItem orderItem : orderItemsForUpdate) {
+            OrderItem item = orderItemsNow.stream()
+                    .filter(i -> i.getId().equals(orderItem.getId()))
+                    .findFirst().get();
+            item.setQuantity(orderItem.getQuantity());
+            item.setProductId(orderItem.getProductId());
+        }
+
+        OrderIdResponseDTO orderIdResponseDTO = addItemsInOrder(orderId, orderItemsNew);
+        deleteItemsInOrder(orderId, orderItemsIdForDelete);
+        return orderIdResponseDTO;
+    }
+
     public OrderIdResponseDTO addItemsInOrder(Long orderId, OrderRequestDTO dto) {
         List<OrderItem> orderItems = dto.getOrderItems()
                 .stream()
                 .map(orderItemMapper::dtoToOrderItem)
                 .collect(Collectors.toList());
 
+        return addItemsInOrder(orderId, orderItems);
+    }
+
+    public OrderIdResponseDTO addItemsInOrder(Long orderId, List<OrderItem> orderItems) {
+        for(OrderItem orderItem : orderItems) {
+            if(orderItem.getId() == null || orderItem.getId().equals(0L)) {
+                orderItem.setId(null);
+            }
+        }
         checkExistsProductsByOrderItems(orderId, orderItems);
 
         Order order = orderRepository.findById(orderId)
@@ -96,16 +160,23 @@ public class OrderService {
         return new OrderIdResponseDTO(updated.getId());
     }
 
-    public OrderIdResponseDTO deleteItemsInOrder(Long orderId, OrderItemsIdRequestDTO dto) {
+    public OrderIdResponseDTO deleteItemsInOrder(Long orderId, List<Long> orderIds) {
+        if (orderIds.isEmpty()) {
+            return new OrderIdResponseDTO(orderId);
+        }
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
-        List<Long> orderIds = dto.getOrderIds();
         List<OrderItem> orderItems = orderItemRepository.findByIdIn(orderIds);
 
         order.deleteItems(orderItems);
-        order.addItems(orderItems);
+//        order.addItems(orderItems);
         Order updated = orderRepository.save(order);
         return new OrderIdResponseDTO(updated.getId());
+    }
+
+    public OrderIdResponseDTO deleteItemsInOrder(Long orderId, OrderItemsIdRequestDTO dto) {
+        List<Long> orderIds = dto.getOrderIds();
+        return deleteItemsInOrder(orderId, orderIds);
     }
 
     public void deleteOrderById(Long id) {
@@ -121,7 +192,7 @@ public class OrderService {
             throw new OrderAlreadyPaidException(MessageExceptionUtil.OrderAlreadyPaidWithId.formatted(id));
         order.setIsPaid(true);
         Order saved = orderRepository.save(order);
-        if(!order.getDeletedProductId().equals(-1L)){
+        if (!order.getDeletedProductId().equals(-1L)) {
             KafkaProductOrderId object = KafkaProductOrderId.builder()
                     .orderId(order.getId())
                     .productId(order.getDeletedProductId())
@@ -168,7 +239,7 @@ public class OrderService {
         Long productId = value.getProductId();
         boolean isExists = value.getIsExists();
 
-        if(!isExists){
+        if (!isExists) {
             Order order = orderRepository.findById(orderId).get();
             OrderItem orderItem = order.getOrderItems()
                     .stream()
@@ -176,8 +247,85 @@ public class OrderService {
                     .findFirst().get();
             order.deleteItem(orderItem);
             orderRepository.save(order);
+//            removeDuplicateInOrder(orderId);
         }
     }
+
+//    private void removeDuplicateInOrder(Long orderId){
+//        Order order = orderRepository.findById(orderId)
+//                .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
+//        List<OrderItem> orderItems = order.getOrderItems();
+//        Set<Long> distinctProductsId = new HashSet<>();
+//
+//        List<OrderItem> orderItemsForDelete = orderItems
+//                .stream()
+//                .filter(n -> !distinctProductsId.add(n.getProductId()))
+//                .toList();
+//
+//        Map<Long, Integer> countItemByProductId = new HashMap<>();
+//        for (OrderItem orderItem : orderItemsForDelete) {
+//            countItemByProductId.put(orderItem.getProductId(), orderItem.getQuantity());
+//            orderItems.remove(orderItem);
+//        }
+//
+//        for(var item : countItemByProductId.entrySet()){
+//            Optional<OrderItem> itemMaybe = orderItems.stream().filter(i -> i.getProductId().equals(item.getKey()))
+//                    .findFirst();
+//            if (itemMaybe.isPresent()) {
+//                OrderItem orderItemExists = itemMaybe.get();
+//                orderItemExists.setQuantity(orderItemExists.getQuantity() + item.getValue());
+//            }
+//        }
+//        orderRepository.save(order);
+//    }
+
+
+
+//    public OrderIdResponseDTO updateOrder(Long orderId, OrderRequestDTO dto) {
+//        Order order = orderRepository.findById(orderId)
+//                .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
+//
+//        List<OrderItem> orderItemsForUpdate = new ArrayList<>(dto.getOrderItems().stream()
+//                .map(orderItemMapper::dtoToOrderItem)
+//                .toList());
+//
+//        List<OrderItem> orderItemsNow = order.getOrderItems();
+//
+//        Map<Long, OrderItem> currentItemsMap = orderItemsNow.stream()
+//                .collect(Collectors.toMap(OrderItem::getProductId, Function.identity()));
+//
+//        List<Long> orderItemsIdForDelete = orderItemsNow
+//                .stream()
+//                .map(OrderItem::getId)
+//                .filter(id -> !orderItemsForUpdate
+//                        .stream().map(OrderItem::getId)
+//                        .toList()
+//                        .contains(id))
+//                .toList();
+//
+//        List<Integer> indexForDeleteFromUpdate = new ArrayList<>();
+////        for (OrderItem orderItem : orderItemsForUpdate) {
+////            OrderItem item = currentItemsMap.get(orderItem.getProductId());
+////            if (item != null) {
+////                item.setQuantity(orderItem.getQuantity());
+////                Optional<OrderItem> first = orderItemsForUpdate.stream()
+////                        .filter(i -> i.getProductId().equals(item.getProductId()))
+////                        .findFirst();
+////                List<Long> productIds = orderItemsForUpdate.stream()
+////                        .map(OrderItem::getProductId)
+////                        .toList();
+////                int index = productIds.indexOf(first.get().getProductId());
+////                indexForDeleteFromUpdate.add(index);
+////            }
+////        }
+////        for(int index : indexForDeleteFromUpdate) {
+////            orderItemsForUpdate.remove(index);
+////        }
+//
+//        OrderIdResponseDTO orderIdResponseDTO = addItemsInOrder(orderId, orderItemsForUpdate);
+//        deleteItemsInOrder(orderId, orderItemsIdForDelete);
+//        return orderIdResponseDTO;
+//    }
 
 
     private void checkExistsProductsById(Long orderId, List<Long> productIds) {

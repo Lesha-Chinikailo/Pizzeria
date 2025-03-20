@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.util.Objects;
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,4 +30,16 @@ public class OrderItem {
     @Column(name = "quantity")
     private Integer quantity;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OrderItem orderItem = (OrderItem) o;
+        return Objects.equals(id, orderItem.id) && Objects.equals(productId, orderItem.productId) && Objects.equals(quantity, orderItem.quantity);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, productId, quantity);
+    }
 }

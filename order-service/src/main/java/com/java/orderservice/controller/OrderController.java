@@ -17,34 +17,39 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/orders")
-//@EnableGlobalMethodSecurity(prePostEnabled = true)
+@CrossOrigin(origins = "http://localhost:4200/")
 public class OrderController {
     @Autowired
     private OrderService orderService;
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<OrderIdResponseDTO> addOrder(@Valid @RequestBody OrderRequestDTO dto) {
+    public ResponseEntity<OrderResponseDTO> addOrder(@Valid @RequestBody OrderRequestDTO dto) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(orderService.saveNewOrder(dto));
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<OrderResponseDTO>> getOrders() {
         return ResponseEntity.ok(orderService.findAllOrders());
     }
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/username/{username}")
     public ResponseEntity<List<OrderResponseDTO>> getOrdersByUsername(@PathVariable String username) {
         return ResponseEntity.ok(orderService.findAllOrdersByUsername(username));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponseDTO> getOrder(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.findOrderById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<OrderIdResponseDTO> updateOrder(@PathVariable Long id, @Valid @RequestBody OrderRequestDTO dto) {
+        return ResponseEntity.ok(
+                orderService.updateOrder(id, dto));
     }
 
     @PutMapping("/addItems/{id}")
@@ -58,7 +63,6 @@ public class OrderController {
         return ResponseEntity.ok(orderService.deleteItemsInOrder(id, dto));
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrderById(id);
