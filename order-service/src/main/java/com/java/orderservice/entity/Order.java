@@ -32,7 +32,8 @@ public class Order {
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Builder.Default
-    private Long deletedProductId = -1L;
+    @ElementCollection
+    private List<Long> deletedProductIds = new ArrayList<>();
 
     public static Order buildOrderWithItems(List<OrderItem> orderItems) {
         Order newOrder = Order.builder()

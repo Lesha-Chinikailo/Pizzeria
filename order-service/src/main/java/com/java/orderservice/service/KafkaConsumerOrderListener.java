@@ -34,7 +34,7 @@ class KafkaConsumerOrderListener {
             kafkaProducerService.sendMessageResponseToProductFromOrderService(object);
         }
         else{
-            orderService.setHasDeletedProduct(orderId, productId);
+            orderService.addDeletedProductId(orderId, productId);
         }
     }
 

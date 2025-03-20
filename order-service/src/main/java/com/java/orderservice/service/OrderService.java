@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -83,10 +82,11 @@ public class OrderService {
                         .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(id))));
     }
 
-    public void setHasDeletedProduct(Long orderId, Long productId) {
+    @Transactional
+    public void addDeletedProductId(Long orderId, Long productId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(MessageExceptionUtil.UnableFindOrderById.formatted(orderId)));
-        order.setDeletedProductId(productId);
+        order.getDeletedProductIds().add(productId);
         orderRepository.save(order);
     }
 
@@ -169,7 +169,17 @@ public class OrderService {
         List<OrderItem> orderItems = orderItemRepository.findByIdIn(orderIds);
 
         order.deleteItems(orderItems);
-//        order.addItems(orderItems);
+        List<Long> itemIdsDelete = orderItems.stream()
+                .map(OrderItem::getProductId)
+                .toList();
+
+        List<Long> deletedProductIds = order.getDeletedProductIds();
+        for(Long productIdForDelete : deletedProductIds) {
+            if(itemIdsDelete.contains(productIdForDelete)) {
+                sendToRemoveProduct(orderId, productIdForDelete);
+            }
+        }
+
         Order updated = orderRepository.save(order);
         return new OrderIdResponseDTO(updated.getId());
     }
@@ -192,14 +202,20 @@ public class OrderService {
             throw new OrderAlreadyPaidException(MessageExceptionUtil.OrderAlreadyPaidWithId.formatted(id));
         order.setIsPaid(true);
         Order saved = orderRepository.save(order);
-        if (!order.getDeletedProductId().equals(-1L)) {
-            KafkaProductOrderId object = KafkaProductOrderId.builder()
-                    .orderId(order.getId())
-                    .productId(order.getDeletedProductId())
-                    .build();
-            kafkaProducerService.sendMessageResponseToProductFromOrderService(object);
+        if (!order.getDeletedProductIds().isEmpty()) {
+            for(Long productId : order.getDeletedProductIds()) {
+                sendToRemoveProduct(order.getId(), productId);
+            }
         }
         return new OrderIdResponseDTO(saved.getId());
+    }
+
+    private void sendToRemoveProduct(Long orderId, Long productId) {
+        KafkaProductOrderId object = KafkaProductOrderId.builder()
+                .orderId(orderId)
+                .productId(productId)
+                .build();
+        kafkaProducerService.sendMessageResponseToProductFromOrderService(object);
     }
 
     @Transactional
